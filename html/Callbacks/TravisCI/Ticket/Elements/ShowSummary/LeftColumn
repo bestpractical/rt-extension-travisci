@@ -1,0 +1,11 @@
+<%args>
+$Ticket
+</%args>
+<%init>
+use RT::Extension::TravisCI;
+return unless grep { $Ticket->QueueObj->Name eq $_ }
+    @{ RT->Config->Get('TravisCI')->{Queues} || [] };
+
+my ($project, $branch) = RT::Extension::TravisCI::parse_subject_for_project_and_branch($Ticket->Subject);
+</%init>
+<& /Elements/TravisCIStatus, Project => $project, Branch => $branch &>
