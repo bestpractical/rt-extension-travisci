@@ -1,41 +1,14 @@
-<!-- At some point in the future, we will want this to be done via AJAX.
-     For now, we fetch the TravisCI status directly when rendering
-     the page -->
 <%args>
-$Project => undef
-$Branch  => undef
+$Ticket => undef
 </%args>
 <%init>
-use JSON;
-return unless $Branch and $Project;
-my $travis = RT->Config->Get('TravisCI')->{APIURL};
-my $travis_status = RT::Extension::TravisCI::get_status($Project, $Branch);
-my $title_url;
-if ($travis_status->{success}) {
-   my $r = $travis_status->{result};
-   $title_url = RT->Config->Get('TravisCI')->{WebURL} . '/' . $r->{repository}->{slug} . '/builds/' . $r->{last_build}->{id};
-}
 </%init>
 <&|/Widgets/TitleBox,
     class => "travisci-status",
-    title => loc("Travis-CI Status"),
+    title => loc("Travis CI Status"),
     title_class => 'inverse',
-    title_href => $title_url,
 &>
 
-<div class="travisci">
-% if (!$travis_status->{success}) {
-Could not fetch TravisCI status: <% $travis_status->{error} |h %>
-% } else {
-% my $r = $travis_status->{result};
-<table>
-<tr>
-<td>Status: </td>
-<td><a href="<% $title_url %>"><span class="travis-status-<% $r->{last_build}->{state} %>"><% RT::Extension::TravisCI::pretty_state($r->{last_build}->{state}) |h %></span></a></td></tr>
-<tr><td>Build started: </td><td><% $r->{last_build}->{started_at} |h %></td></tr>
-<tr><td>Build finished: </td><td><% $r->{last_build}->{finished_at} |h %></td></tr>
-</table>
-%}
+<div class="travisci" id="travisci" data-travisci-ticketid="<% $Ticket->id %>">
 </div>
-
 </&>

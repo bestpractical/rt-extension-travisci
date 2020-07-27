@@ -18,7 +18,8 @@ $RT::Config::META{TravisCI} = {
     Type => 'HASH',
 };
 
-RT->AddStyleSheets("travisci.css");
+RT->AddStyleSheets('travisci.css');
+RT->AddJavaScript('travisci.js');
 
 sub getconf
 {

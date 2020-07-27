@@ -1,3 +1,0 @@
-<script type="text/javascript">
-window.TravisCI = <% JSON(scalar RT->Config->Get("TravisCI")) |n %>;
-</script>
