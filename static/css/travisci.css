@@ -1,8 +1,7 @@
-.travisci-status .titlebox .titlebox-title .left {
-    background-color: #ab671a;
-    color: #fff;
-}
+.titlebox.card.travisci-status {
+        border-top: 3px solid #555500;
 
+}
 .travis-status-passed {
     color: #0d0;
     font-weight: bold;
