@@ -6,7 +6,7 @@ DESCRIPTION
     the latest build on a branch.
 
 RT VERSION
-    Works with RT 4.4, 5.0
+    Works with RT 5.0
 
 INSTALLATION
     perl Makefile.PL
@@ -14,13 +14,13 @@ INSTALLATION
     make install
         May need root permissions
 
-    Edit your /opt/rt4/etc/RT_SiteConfig.pm
+    Edit your /opt/rt5/etc/RT_SiteConfig.pm
         Add this line:
 
             Plugin('RT::Extension::TravisCI');
 
     Clear your mason cache
-            rm -rf /opt/rt4/var/mason_data/obj
+            rm -rf /opt/rt5/var/mason_data/obj
 
     Restart your webserver
 

@@ -88,7 +88,7 @@ for the latest build on a branch.
 
 =head1 RT VERSION
 
-Works with RT 4.4, 5.0
+Works with RT 5.0
 
 =head1 INSTALLATION
 
@@ -102,13 +102,14 @@ Works with RT 4.4, 5.0
 
 May need root permissions
 
-=item Edit your F</opt/rt4/etc/RT_SiteConfig.pm>
+=item Edit your F</opt/rt5/etc/RT_SiteConfig.pm>
 
 Add this line:
 
     Plugin('RT::Extension::TravisCI');
 
-=item Edit your F</opt/rt4/local/plugins/RT-Extension-TravisCI/etc/TravisCI_Config.pm>
+=item Edit your F</opt/rt5/etc/RT_SiteConfig.d/TravisCI_Config.pm> (creating
+it if necessary) using the included F<etc/TravisCI_Config.pm> as a guide.
 
 The settings you are most likely to want to change are F<SlugPrefix>, which
 should be your organization's identifier follwed by an escaped slash: %2F;
@@ -119,7 +120,7 @@ https://medium.com/@JoshuaTheMiller/retrieving-your-travis-ci-api-access-token-b
 
 =item Clear your mason cache
 
-    rm -rf /opt/rt4/var/mason_data/obj
+    rm -rf /opt/rt5/var/mason_data/obj
 
 =item Restart your webserver
 

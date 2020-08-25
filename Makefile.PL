@@ -8,7 +8,7 @@ license 'gplv2';
 
 repository 'https://github.com/bestpractical/rt-extension-travisci';
 
-requires_rt '4.4.0';
+requires_rt '5.0.0';
 rt_too_new '5.2.0';
 
 my ($lp) = ($INC{'RT.pm'} =~ /^(.*)[\\\/]/);
