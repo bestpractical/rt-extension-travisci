@@ -30,6 +30,11 @@ sub getconf
 sub parse_subject_for_project_and_branch
 {
     my $subject = shift;
+
+    # Trim leading and trailing whitespace from subject
+    $subject =~ s/^\s+//;
+    $subject =~ s/\s+$//;
+
     if ($subject =~ /^([A-Za-z_.-]+)[\/ ](.+)/) {
         RT->Logger->debug(
             "Extracted project '$1' and branch '$2' from ticket subject '$subject'");
@@ -56,7 +61,11 @@ sub get_status
 
     my $ua = LWP::UserAgent->new();
 
-    my $url = getconf('APIURL') . '/repo/' . getconf('SlugPrefix') . uri_escape($proj) . '/branch/' . uri_escape($branch);
+    my $slug = getconf('SlugPrefix');
+    # Add the escaped / '%2F' if slug doesn't already end in it
+    $slug .= '%2F' unless $slug =~ /%2f$/i;
+
+    my $url = getconf('APIURL') . '/repo/' . $slug . uri_escape($proj) . '/branch/' . uri_escape($branch);
     my $response = $ua->get($url,
                             'Travis-API-Version' => getconf('APIVersion'),
                             'Authorization' => 'token ' . getconf('AuthToken'),
@@ -111,9 +120,9 @@ Add this line:
 =item Edit your F</opt/rt5/etc/RT_SiteConfig.d/TravisCI_Config.pm> (creating
 it if necessary) using the included F<etc/TravisCI_Config.pm> as a guide.
 
-The settings you are most likely to want to change are F<SlugPrefix>, which
-should be your organization's identifier follwed by an escaped slash: %2F;
-DefaultProject, Queues and AuthToken.
+The settings you are most likely to want to change are F<SlugPrefix>,
+which should be your organization's identifier; DefaultProject, Queues
+and AuthToken.
 
 You will need to generate an authentication token as documented in
 https://medium.com/@JoshuaTheMiller/retrieving-your-travis-ci-api-access-token-bc706b2b625a

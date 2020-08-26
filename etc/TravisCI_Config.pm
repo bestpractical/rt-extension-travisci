@@ -2,7 +2,7 @@ Set( %TravisCI,
      APIURL => 'https://api.travis-ci.org',
      WebURL  => 'https://travis-ci.org/github',
      APIVersion => '3',
-     SlugPrefix => 'bestpractical%2F',
+     SlugPrefix => 'bestpractical',
      DefaultProject => 'rt',
      Queues => ['Branch Review'],
 );
