@@ -10,6 +10,7 @@ RT-Extension-TravisCI - Pull status of latest build from TravisCI
 =cut
 
 require RT::Config;
+use RT::Date;
 use LWP::UserAgent ();
 use URI::Escape;
 use JSON;
@@ -54,10 +55,28 @@ sub pretty_state {
     return $state;
 }
 
+sub format_date
+{
+    my ($date_iso8601, $current_user) = @_;
+
+    # Remove the trailing 'Z' we get back from Travis CI;
+    # RT::Date will not parse the date if it is present.  We also
+    # need to change the 'T' to a space or it will fail to parse.
+    $date_iso8601 =~ s/Z$//;
+    $date_iso8601 =~ s/T/ /;
+
+    my $d = RT::Date->new($current_user);
+    if ($d->Set(Value => $date_iso8601, Format => 'ISO')) {
+        return $d->AsString;
+    }
+    return $date_iso8601;
+}
+
 sub get_status
 {
     my $proj = shift;
     my $branch = shift;
+    my $current_user = shift;
 
     my $ua = LWP::UserAgent->new();
 
@@ -82,6 +101,10 @@ sub get_status
     if ($@) {
         return { success => 0, error => 'Could not parse result as JSON' };
     }
+
+    # Format the dates according to user preference
+    $result->{last_build}->{started_at}  = format_date($result->{last_build}->{started_at}, $current_user);
+    $result->{last_build}->{finished_at} = format_date($result->{last_build}->{finished_at}, $current_user);
 
     return { success => 1, result => $result };
 }

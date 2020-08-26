@@ -25,7 +25,7 @@ if (!grep { $Ticket->QueueObj->Name eq $_ }@{ RT->Config->Get('TravisCI')->{Queu
 
 my ($proj, $branch) = RT::Extension::TravisCI::parse_subject_for_project_and_branch($Ticket->Subject);
 
-my $status = RT::Extension::TravisCI::get_status($proj, $branch);
+my $status = RT::Extension::TravisCI::get_status($proj, $branch, $session{'CurrentUser'});
 if ($status->{success}) {
    my $r = $status->{result};
    $r->{last_build}->{pretty_build_state} = RT::Extension::TravisCI::pretty_state($r->{last_build}->{state});
