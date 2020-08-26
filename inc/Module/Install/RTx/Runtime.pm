@@ -1,4 +1,3 @@
-#line 1
 package Module::Install::RTx::Runtime;
 
 use base 'Exporter';

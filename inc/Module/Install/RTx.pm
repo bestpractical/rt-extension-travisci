@@ -1,4 +1,3 @@
-#line 1
 package Module::Install::RTx;
 
 use 5.008;
@@ -6,9 +5,10 @@ use strict;
 use warnings;
 no warnings 'once';
 
+use Term::ANSIColor qw(:constants);
 use Module::Install::Base;
 use base 'Module::Install::Base';
-our $VERSION = '0.40';
+our $VERSION = '0.42';
 
 use FindBin;
 use File::Glob     ();
@@ -53,7 +53,7 @@ sub RTx {
         my @look = @INC;
         unshift @look, grep {defined and -d $_} @try;
         push @look, grep {defined and -d $_}
-            map { ( "$_/rt4/lib", "$_/lib/rt4", "$_/lib" ) } @prefixes;
+            map { ( "$_/rt5/lib", "$_/lib/rt5", "$_/rt4/lib", "$_/lib/rt4", "$_/lib" ) } @prefixes;
         last if eval {local @INC = @look; require RT; $RT::LocalLibPath};
 
         warn
@@ -74,6 +74,22 @@ sub RTx {
     # Set a baseline minimum version
     unless ( $extra_args->{deprecated_rt} ) {
         $self->requires_rt('4.0.0');
+    }
+
+    my $package = $name;
+    $package =~ s/-/::/g;
+    if ( $RT::CORED_PLUGINS{$package} ) {
+        my ($base_version) = $RT::VERSION =~ /(\d+\.\d+\.\d+)/;
+        die RED, <<"EOT";
+
+**** Error: Your installed version of RT ($RT::VERSION) already
+            contains this extension in core, so you don't need to
+            install it.
+
+            Check https://docs.bestpractical.com/rt/$base_version/RT_Config.html
+            to configure it.
+
+EOT
     }
 
     # Installation locations
@@ -223,7 +239,7 @@ sub requires_rt {
     my @sorted = sort RT::Handle::cmp_version $version,$RT::VERSION;
 
     if ($sorted[-1] eq $version) {
-        die <<"EOT";
+        die RED, <<"EOT";
 
 **** Error: This extension requires RT $version. Your installed version
             of RT ($RT::VERSION) is too old.
@@ -249,12 +265,12 @@ sub requires_rt_plugin {
         unshift @INC, $path;
     } else {
         my $name = $self->name;
-        warn <<"EOT";
+        my $msg = <<"EOT";
 
 **** Warning: $name requires that the $plugin plugin be installed and
               enabled; it does not appear to be installed.
-
 EOT
+        warn RED, $msg, RESET, "\n";
     }
     $self->requires(@_);
 }
@@ -264,9 +280,8 @@ sub rt_too_new {
     my $name = $self->name;
     $msg ||= <<EOT;
 
-**** Error: Your installed version of RT (%s) is too new; this extension
-            only works with versions older than %s.
-
+**** Warning: Your installed version of RT (%s) is too new; this extension
+              has not been tested on your version of RT and may not work as expected.
 EOT
     $self->add_metadata("x_rt_too_new", $version) if $self->is_admin;
 
@@ -274,7 +289,7 @@ EOT
     my @sorted = sort RT::Handle::cmp_version $version,$RT::VERSION;
 
     if ($sorted[0] eq $version) {
-        die sprintf($msg,$RT::VERSION,$version);
+        warn RED, sprintf($msg,$RT::VERSION), RESET, "\n";
     }
 }
 
@@ -297,4 +312,173 @@ sub _load_rt_handle {
 
 __END__
 
-#line 468
+=head1 NAME
+
+Module::Install::RTx - RT extension installer
+
+=head1 SYNOPSIS
+
+In the F<Makefile.PL> of the C<RT-Extension-Example> module:
+
+    use inc::Module::Install;
+    RTx 'RT-Extension-Example';
+
+    requires_rt '4.2.0';
+    rt_too_new  '4.4.0';
+
+    WriteAll();
+
+=head1 DESCRIPTION
+
+This B<Module::Install> extension implements several functions for
+installing RT extensions:
+
+=head2 RTx 'I<extension name>'
+
+This function arranges for the following directories to be installed, if
+they exist (assuming C<RTx('RT-Extension-Example')>):
+
+    ./bin    => $RT::LocalPluginPath/RT-Extension-Example/bin
+    ./etc    => $RT::LocalPluginPath/RT-Extension-Example/etc
+    ./html   => $RT::LocalPluginPath/RT-Extension-Example/html
+    ./lib    => $RT::LocalPluginPath/RT-Extension-Example/lib
+    ./po     => $RT::LocalPluginPath/RT-Extension-Example/po
+    ./sbin   => $RT::LocalPluginPath/RT-Extension-Example/sbin
+    ./static => $RT::LocalPluginPath/RT-Extension-Example/static
+    ./var    => $RT::LocalPluginPath/RT-Extension-Example/var
+
+Accepts an optional argument hashref after the extension name with two possible keys
+
+=head2 deprecated_rt
+
+    If set to a true value, skips the enforced RT-4.0.0 minimum version check
+
+    You should set a perl_version if using this option and requires_rt(), because requires_rt
+    only handles figuring our what perl you need if you're on RT 4.0.0 or higher.
+
+=head2 no_readme_generation
+
+    If set to a true value, will not call readme_from on the extension's primary perl module.
+
+=head2 requires_rt I<version>
+
+Takes one argument, a valid RT version. If an attempt is made to install
+on an RT than that version, it will die before Makefile creation.
+
+=head2 requires_rt_plugin I<RT::Extension::Example> [, I<version>]
+
+Ensures that the given RT extension (and optional version) is installed
+in the target RT instance; C<requires> cannot be used because RT
+extensions are not in @INC.
+
+=head2 rt_too_new I<version> [, I<message>]
+
+Takes one argument, a valid RT version, and prevents this module from
+being installed on any version of RT equal to or newer than that.
+Useful if a particular release of an extension only works on 4.0.x but
+not 4.2.x.
+
+Takes an optional second argument which allows you to specify a custom
+error message. This message is passed to sprintf with two string
+arguments, the current RT version and the version you specify.
+
+=head2 remove_files
+
+If set to a true value, during installation any files listed in a
+C<remove_files> file will be removed from the destination directories.
+This feature is for removing files that have been deleted or moved in
+the current version and leaving the old version in place when upgrading
+can cause problems.
+
+RTx looks for a C<remove_files> file in the etc/upgrade directory of
+the distribution. The format of the C<remove_files> file is as
+follows:
+
+    package Module::Install::RTx;
+
+    @remove_files = qw(
+    html/dir/file_to_remove
+    );
+    1;
+
+The file locations are relative to the distribution. The destination
+directory prefix is added automatically.
+
+=head1 CAVEATS
+
+=over 4
+
+=item *
+
+Us the full name when calling RTx method in Makefile.PL; while
+C<RTx('Foo')> was once supported, it is no longer.
+
+=back
+
+=head1 ENVIRONMENT
+
+=over 4
+
+=item RTHOME
+
+Path to the RT installation that contains a valid F<lib/RT.pm>.
+
+=back
+
+=head1 EXAMPLES
+
+To install an extension which makes use of this installer:
+
+    perl Makefile.PL RTHOME=/opt/rt5
+
+This will install all subdirs into the $RT::LocalPluginPath dir
+as configured in RT::Generated.
+
+To install an extension into the (vendor) plugin path:
+
+    perl Makefile.PL RTHOME=/opt/rt5 INSTALLDIRS=vendor
+
+This will install all subdirs into the $RT::PluginPath which is specifically
+meant for plugins that are installed through other packaging utils like
+APT or RPM.
+
+=head1 SEE ALSO
+
+L<Module::Install>
+
+L<http://www.bestpractical.com/rt/>
+
+=head1 AUTHORS
+
+Best Practical Solutions
+
+(Originally) Audrey Tang <cpan@audreyt.org>
+
+=head1 COPYRIGHT
+
+Copyright 2003, 2004, 2007 by Audrey Tang E<lt>cpan@audreyt.orgE<gt>.
+Copyright 2008-2020 Best Practical Solutions
+
+This software is released under the MIT license cited below.
+
+=head2 The "MIT" License
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+DEALINGS IN THE SOFTWARE.
+
+=cut
