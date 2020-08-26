@@ -102,6 +102,10 @@ sub get_status
         return { success => 0, error => 'Could not parse result as JSON' };
     }
 
+    if ( !$result->{last_build} ) {
+        return { success => 0, error => 'Not found' };
+    }
+
     # Format the dates according to user preference
     $result->{last_build}->{started_at}  = format_date($result->{last_build}->{started_at}, $current_user);
     $result->{last_build}->{finished_at} = format_date($result->{last_build}->{finished_at}, $current_user);
