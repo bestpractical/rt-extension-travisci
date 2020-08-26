@@ -3,12 +3,12 @@
 
 }
 .travis-status-passed {
-    color: #0d0;
+    color: #28a745;
     font-weight: bold;
 }
 
 .travis-status-errored, .travis-status-failed {
-    color: #d00;
+    color: #dc3545;
     font-weight: bold;
 }
 
