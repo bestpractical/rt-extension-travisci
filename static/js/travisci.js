@@ -15,9 +15,9 @@ jQuery(function(){
     };
 
     var template =
-        '<table><tr><td>Status: </td><td><a href="{{ title_url }}""><span class="travis-status-{{ last_build_state }}">{{ pretty_build_state }}</span></a></td></tr>'
-        + '<tr><td>Build started: </td><td>{{ build_start }}</td></tr>'
-        + '<tr><td>Build ended: </td><td>{{ build_end }}</td></tr></table>'
+        '<div class="form-row"><div class="label col-3">Status:</div><div class="value col-9"><a href="{{ title_url }}""><span class="travis-status-{{ last_build_state }}">{{ pretty_build_state }}</span></a></div></div>'
+        + '<div class="form-row"><div class="label col-3">Build started: </div><div class="value col-9">{{ build_start }}</div></div>'
+        + '<div class="form-row"><div class="label col-3">Build ended: </div><div class="value col-9">{{ build_end }}</div></div>'
     ;
 
     var travisci_fetch = function(template) {
