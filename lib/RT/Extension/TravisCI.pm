@@ -147,12 +147,16 @@ Add this line:
 =item Edit your F</opt/rt5/etc/RT_SiteConfig.d/TravisCI_Config.pm> (creating
 it if necessary) using the included F<etc/TravisCI_Config.pm> as a guide.
 
+=over
+
 The settings you are most likely to want to change are F<SlugPrefix>,
 which should be your organization's identifier; DefaultProject, Queues
 and AuthToken.
 
 You will need to generate an authentication token as documented in
 https://medium.com/@JoshuaTheMiller/retrieving-your-travis-ci-api-access-token-bc706b2b625a
+
+=back
 
 =item Clear your mason cache
 
@@ -161,6 +165,18 @@ https://medium.com/@JoshuaTheMiller/retrieving-your-travis-ci-api-access-token-b
 =item Restart your webserver
 
 =back
+
+=head1 DETERMINING THE PROJECT AND BRANCH
+
+To determine the project and branch names, the extension parses the
+Subject of the ticket.  If the subject matches:
+
+    /^([A-Za-z_.-]+)[\/ ](.+)/
+
+then the first submatch is taken to be the project name and the second to
+be the branch name.  Otherwise, the project name is taken to be the
+DefaultProject configuration variable in TravisCI_Config.pm, and the
+branch name is taken to be the entire ticket subject.
 
 =head1 AUTHOR
 
